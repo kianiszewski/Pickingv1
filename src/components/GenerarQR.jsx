@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import QRious from 'qrious';
-import { Card, Button, Form, Col, Row, Container } from 'react-bootstrap';
+import { Card, Button, Form, Col, Row, Container, Alert } from 'react-bootstrap';
 
 const GenerarQR = () => {
   const [codigo, setCodigo] = useState('');
@@ -10,8 +10,18 @@ const GenerarQR = () => {
   const [cantidad, setCantidad] = useState('');
   const [ubicacion, setUbicacion] = useState('');
   const [qrImage, setQrImage] = useState('');
+  const [error, setError] = useState('');
 
   const handleGenerateQR = () => {
+    // Verifica que todos los campos estén llenos
+    if (!codigo || !descripcion || !cantidad || !ubicacion) {
+      setError('Por favor, completa todos los campos.');
+      return;
+    }
+
+    // Resetea el mensaje de error
+    setError('');
+
     const qr = new QRious({
       value: `Código: ${codigo}, Descripción: ${descripcion}, Cantidad: ${cantidad}, Ubicación: ${ubicacion}`,
       size: 300,
@@ -65,6 +75,7 @@ const GenerarQR = () => {
             <Button variant="primary" onClick={handleGenerateQR}>
               Generar QR
             </Button>
+            {error && <Alert variant="danger" className="mt-2">{error}</Alert>}
           </Form>
         </Col>
         <Col md={6}>
