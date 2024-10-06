@@ -1,10 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Carousel, Button, Card, Col } from 'react-bootstrap';
 import Barcode from 'react-barcode';
 
 const ListaTrabajo = ({ trabajos, setTrabajos, setTrabajosTerminados }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [nextJobId, setNextJobId] = useState(trabajos.length > 0 ? trabajos[trabajos.length - 1].id + 1 : 1); // Start from last ID + 1
+
+  useEffect(() => {
+    const handleKeyPress = (event) => {
+      if (event.key === 'Enter') {
+        handleFinalizar();
+      }
+    };
+
+    // Agregar el event listener cuando el componente se monta
+    window.addEventListener('keydown', handleKeyPress);
+
+    // Limpiar el event listener cuando el componente se desmonta
+    return () => {
+      window.removeEventListener('keydown', handleKeyPress);
+    };
+  }, [currentIndex, trabajos]); // Dependencia a trabajos y currentIndex para mantener el valor actualizado
 
   const handleFinalizar = () => {
     const trabajoFinalizado = {
