@@ -4,11 +4,12 @@ import Barcode from 'react-barcode';
 
 const ListaTrabajo = ({ trabajos, setTrabajos, setTrabajosTerminados }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [nextJobId, setNextJobId] = useState(trabajos.length > 0 ? trabajos[trabajos.length - 1].id + 1 : 1); // Start from last ID + 1
+  const [nextJobId, setNextJobId] = useState(trabajos.length > 0 ? trabajos[trabajos.length - 1].id + 1 : 1);
 
   useEffect(() => {
     const handleKeyPress = (event) => {
-      if (event.key === 'Enter') {
+      if (event.key === 'Enter' || event.key === ' ') { // Verifica Enter o Espacio
+        event.preventDefault(); // Previene acciones predeterminadas
         handleFinalizar();
       }
     };
@@ -20,7 +21,7 @@ const ListaTrabajo = ({ trabajos, setTrabajos, setTrabajosTerminados }) => {
     return () => {
       window.removeEventListener('keydown', handleKeyPress);
     };
-  }, [currentIndex, trabajos]); // Dependencia a trabajos y currentIndex para mantener el valor actualizado
+  }, [currentIndex, trabajos]);
 
   const handleFinalizar = () => {
     const trabajoFinalizado = {
@@ -42,7 +43,6 @@ const ListaTrabajo = ({ trabajos, setTrabajos, setTrabajosTerminados }) => {
       setCurrentIndex(currentIndex - 1);
     }
 
-    // Auto-reset the ID counter if all jobs are done
     if (trabajos.length === 1) {
       setNextJobId(1);
     }
@@ -50,15 +50,6 @@ const ListaTrabajo = ({ trabajos, setTrabajos, setTrabajosTerminados }) => {
 
   const handleResetId = () => {
     setNextJobId(1);
-  };
-
-  const handleAddJob = (newJob) => {
-    const jobWithId = {
-      ...newJob,
-      id: nextJobId,
-    };
-    setTrabajos((prev) => [...prev, jobWithId]);
-    setNextJobId(nextJobId + 1); // Increment the ID for the next job
   };
 
   const handlePrev = () => {
@@ -78,7 +69,10 @@ const ListaTrabajo = ({ trabajos, setTrabajos, setTrabajosTerminados }) => {
           <Carousel activeIndex={currentIndex} controls={false}>
             {trabajos.map((trabajo, index) => (
               <Carousel.Item key={trabajo.id}>
-                <Card className="text-center trabajo-card d-flex justify-content-center align-items-center" style={{ minHeight: '400px' }}>
+                <Card
+                  className="text-center trabajo-card d-flex justify-content-center align-items-center"
+                  style={{ minHeight: '400px' }}
+                >
                   <Card.Body className="d-flex flex-column justify-content-center align-items-center">
                     <Card.Title>{trabajo.descripcion}</Card.Title>
                     <Card.Text>
@@ -90,11 +84,15 @@ const ListaTrabajo = ({ trabajos, setTrabajos, setTrabajosTerminados }) => {
                       <div>
                         <Barcode value={trabajo.referencia} format="CODE128" />
                       </div>
-                      <strong>ID:</strong> {trabajo.id}<br />
+                      <strong>ID:</strong> {trabajo.id}
+                      <br />
                       <strong>Fecha de Finalización:</strong> {trabajo.fechaFinalizacion}
                     </Card.Text>
 
-                    <Col md={3} className="d-flex flex-column align-items-center justify-content-center">
+                    <Col
+                      md={3}
+                      className="d-flex flex-column align-items-center justify-content-center"
+                    >
                       <div style={{ textAlign: 'center' }}>
                         <p style={{ fontSize: '1.5rem', fontWeight: 'normal' }}>Cantidad</p>
                         <div style={{ fontSize: '4rem', fontWeight: 'bold' }}>
@@ -122,12 +120,10 @@ const ListaTrabajo = ({ trabajos, setTrabajos, setTrabajosTerminados }) => {
             </Button>
           </div>
 
-          {/* Mostrar la cantidad total de trabajos */}
           <div className="mt-3 d-flex justify-content-center">
             <h5>Total de trabajos registrados: {trabajos.length}</h5>
           </div>
 
-          {/* Reset ID counter button */}
           <div className="mt-3 d-flex justify-content-center">
             <Button variant="danger" onClick={handleResetId}>
               Resetear ID de Trabajos

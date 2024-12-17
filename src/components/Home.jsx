@@ -1,18 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Form } from 'react-bootstrap';
-import Barcode from 'react-barcode';
+import * as XLSX from 'xlsx'; // Importar XLSX
 
 const Home = ({ setTrabajos }) => {
   const [codigo, setCodigo] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [cantidad, setCantidad] = useState('');
   const [referencia, setReferencia] = useState('');
-
-  // Contador para el ID
   const [nextId, setNextId] = useState(1);
 
   useEffect(() => {
-    // Aquí puedes cargar los trabajos almacenados y calcular el próximo ID
     const storedTrabajos = JSON.parse(localStorage.getItem('trabajos')) || [];
     if (storedTrabajos.length > 0) {
       const lastId = storedTrabajos[storedTrabajos.length - 1].id;
@@ -23,44 +20,66 @@ const Home = ({ setTrabajos }) => {
   const handleRegistrar = () => {
     if (codigo && descripcion && cantidad && referencia) {
       const newTrabajo = {
-        id: nextId, // Asigna el ID correlativo
+        id: nextId,
         codigo,
         descripcion,
         cantidad,
         referencia,
       };
-
-      // Actualiza la lista de trabajos
       setTrabajos((prev) => [...prev, newTrabajo]);
 
-      // Guarda en localStorage
       const updatedTrabajos = [...(JSON.parse(localStorage.getItem('trabajos')) || []), newTrabajo];
       localStorage.setItem('trabajos', JSON.stringify(updatedTrabajos));
 
-      // Limpiar los campos
       setCodigo('');
       setDescripcion('');
       setCantidad('');
       setReferencia('');
-      setNextId(nextId + 1); // Incrementa el contador de ID
-      
-      // Muestra la alerta con el ID
+      setNextId(nextId + 1);
       alert(`Trabajo con ID: ${newTrabajo.id} ha sido registrado`);
     }
   };
 
-  // Manejar el evento de tecla
-  const handleKeyDown = (event) => {
-    if (event.key === 'Enter') {
-      event.preventDefault(); // Previene el comportamiento predeterminado
-      handleRegistrar(); // Llama a la función para registrar
-    }
+  // Procesar archivo Excel
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+
+    reader.onload = (evt) => {
+      const data = new Uint8Array(evt.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+      // Convertir y agregar datos al estado
+      const trabajosFromExcel = jsonData.map((row, index) => ({
+        id: nextId + index,
+        codigo: row.Código || '',
+        descripcion: row.Descripción || '',
+        cantidad: row.Cantidad || 0,
+        referencia: row.Referencia || '',
+      }));
+
+      setTrabajos((prev) => [...prev, ...trabajosFromExcel]);
+      setNextId(nextId + trabajosFromExcel.length);
+
+      alert('Datos del archivo Excel cargados correctamente.');
+    };
+
+    if (file) reader.readAsArrayBuffer(file);
   };
 
   return (
     <div className="container mt-4">
       <h2>Registrar Trabajo</h2>
       <Form>
+        <Form.Group controlId="formFile">
+          <Form.Label>Subir Archivo Excel</Form.Label>
+          <Form.Control type="file" accept=".xlsx, .xls" onChange={handleFileUpload} />
+        </Form.Group>
+        <br />
         <Form.Group controlId="formCodigo">
           <Form.Label>Código</Form.Label>
           <Form.Control
@@ -68,8 +87,6 @@ const Home = ({ setTrabajos }) => {
             value={codigo}
             onChange={(e) => setCodigo(e.target.value)}
             placeholder="Ingrese el código"
-            autoFocus
-            onKeyDown={handleKeyDown} // Agrega el manejador de eventos aquí
           />
         </Form.Group>
         <Form.Group controlId="formDescripcion">
@@ -79,7 +96,6 @@ const Home = ({ setTrabajos }) => {
             value={descripcion}
             onChange={(e) => setDescripcion(e.target.value)}
             placeholder="Ingrese la descripción"
-            onKeyDown={handleKeyDown} // Agrega el manejador de eventos aquí
           />
         </Form.Group>
         <Form.Group controlId="formCantidad">
@@ -89,7 +105,6 @@ const Home = ({ setTrabajos }) => {
             value={cantidad}
             onChange={(e) => setCantidad(e.target.value)}
             placeholder="Ingrese la cantidad"
-            onKeyDown={handleKeyDown} // Agrega el manejador de eventos aquí
           />
         </Form.Group>
         <Form.Group controlId="formReferencia">
@@ -99,7 +114,6 @@ const Home = ({ setTrabajos }) => {
             value={referencia}
             onChange={(e) => setReferencia(e.target.value)}
             placeholder="Ingrese la referencia"
-            onKeyDown={handleKeyDown} // Agrega el manejador de eventos aquí
           />
         </Form.Group>
         <br />
